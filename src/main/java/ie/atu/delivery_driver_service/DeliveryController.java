@@ -12,9 +12,10 @@ public class DeliveryController {
 
     // Assign a delivery person to an order
     @PostMapping("/assign")
-    public Delivery assignDelivery(@RequestParam String orderId, @RequestParam String deliveryAddress) {
-        return deliveryService.assignDelivery(orderId, deliveryAddress);
+    public Delivery assignDelivery(@RequestBody AssignDeliveryRequest request) {
+        return deliveryService.assignDelivery(request.getOrderId(), request.getDeliveryAddress());
     }
+
 
     // Update delivery status
     @PutMapping("/{deliveryId}/status")
@@ -29,8 +30,8 @@ public class DeliveryController {
     }
 
     @PostMapping("/drivers")
-    public DeliveryPerson addDriver(@RequestParam String name) {
-        return deliveryService.addDeliveryPerson(name);
+    public DeliveryPerson addDriver(@RequestBody DeliveryPerson deliveryPerson) {
+        return deliveryService.addDeliveryPerson(deliveryPerson);
     }
 
 }

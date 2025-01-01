@@ -20,28 +20,37 @@ public class DeliveryService {
 
     // Assign a delivery person to an order
     public Delivery assignDelivery(String orderId, String deliveryAddress) {
+
         Optional<DeliveryPerson> availablePerson = deliveryPersonRepository.findFirstByIsAvailableTrue();
-        if (availablePerson.isPresent()) {
-            DeliveryPerson deliveryPerson = availablePerson.get();
-            deliveryPerson.setAvailable(false); // Mark as unavailable
-            deliveryPersonRepository.save(deliveryPerson);
-
-            Delivery delivery = new Delivery();
-            delivery.setOrderId(orderId);
-            delivery.setDeliveryAddress(deliveryAddress);
-            delivery.setDeliveryPersonId(deliveryPerson.getDeliveryPersonId());
-            delivery.setDeliveryStatus("Assigned");
-            delivery.setCreatedAt(LocalDateTime.now());
-            delivery.setUpdatedAt(LocalDateTime.now());
-            Delivery savedDelivery = deliveryRepository.save(delivery);
-
-            // Send delivery status to RabbitMQ
-            rabbitTemplate.convertAndSend("delivery-status-queue", "Delivery Assigned for Order ID: " + orderId);
-
-            return savedDelivery;
+        if (availablePerson.isEmpty()) {
+            throw new RuntimeException("No available delivery personnel");
         }
-        throw new RuntimeException("No available delivery personnel");
+
+        DeliveryPerson deliveryPerson = availablePerson.get();
+        deliveryPerson.setAvailable(false); // Mark as unavailable
+        deliveryPersonRepository.save(deliveryPerson);
+
+        // Create and save the delivery record
+        Delivery delivery = new Delivery();
+        delivery.setOrderId(orderId);
+        delivery.setDeliveryAddress(deliveryAddress);
+        delivery.setDeliveryPersonId(deliveryPerson.getDeliveryPersonId());
+        delivery.setDeliveryStatus("Assigned");
+        delivery.setCreatedAt(LocalDateTime.now());
+        delivery.setUpdatedAt(LocalDateTime.now());
+
+        Delivery savedDelivery = deliveryRepository.save(delivery);
+
+        // Publish to RabbitMQ
+        try {
+            rabbitTemplate.convertAndSend("delivery-status-queue", "Delivery Assigned for Order ID: " + orderId);
+        } catch (Exception e) {
+            System.err.println("RabbitMQ error: " + e.getMessage());
+        }
+
+        return savedDelivery;
     }
+
 
     // Update delivery status
     public Delivery updateDeliveryStatus(String deliveryId, String status) {
@@ -75,9 +84,7 @@ public class DeliveryService {
                 .orElseThrow(() -> new RuntimeException("Delivery not found"));
     }
 
-    public DeliveryPerson addDeliveryPerson(String name) {
-        DeliveryPerson deliveryPerson = new DeliveryPerson();
-        deliveryPerson.setName(name);
+    public DeliveryPerson addDeliveryPerson(DeliveryPerson deliveryPerson) {
         deliveryPerson.setAvailable(true); // New drivers are available by default
         return deliveryPersonRepository.save(deliveryPerson);
     }
