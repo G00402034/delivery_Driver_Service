@@ -27,5 +27,11 @@ public class DeliveryController {
     public Delivery trackDelivery(@PathVariable String deliveryId) {
         return deliveryService.trackDelivery(deliveryId);
     }
+
+    @PostMapping("/drivers")
+    public DeliveryPerson addDriver(@RequestParam String name) {
+        return deliveryService.addDeliveryPerson(name);
+    }
+
 }
 

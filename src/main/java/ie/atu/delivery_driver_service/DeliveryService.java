@@ -74,6 +74,13 @@ public class DeliveryService {
         return deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new RuntimeException("Delivery not found"));
     }
+
+    public DeliveryPerson addDeliveryPerson(String name) {
+        DeliveryPerson deliveryPerson = new DeliveryPerson();
+        deliveryPerson.setName(name);
+        deliveryPerson.setAvailable(true); // New drivers are available by default
+        return deliveryPersonRepository.save(deliveryPerson);
+    }
 }
 
 
