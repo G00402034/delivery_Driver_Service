@@ -8,6 +8,12 @@ public class AssignDeliveryRequest {
     private String orderId;
     private String deliveryAddress;
 
+    public AssignDeliveryRequest(String orderId, String deliveryAddress) {
+        this.orderId = orderId;
+        this.deliveryAddress = deliveryAddress;
+    }
+
+
     public String getOrderId() {
         return orderId;
     }
